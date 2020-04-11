@@ -1,0 +1,22 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t vtolle/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run vtolle/react-test npm test -- --coverage
+
+after_success:
+    - docker build -t vtolle/multi-client ./client
+    - docker build -t vtolle/multi-nginx ./nginx
+    - docker build -t vtolle/multi-server ./server
+    - docker build -t vtolle/multi-worker ./worker
+    # Log in to the docker CLI
+    - echo "$DOCKER_PASS" | docker login -u "$DOCKER_ID" --password-stdin
+    # Take those images and push them to docker hub
+    - docker push vtolle/multi-client
+    - docker push vtolle/multi-nginx
+    - docker push vtolle/multi-server
+    - docker push vtolle/multi-worker
